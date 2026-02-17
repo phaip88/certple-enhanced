@@ -609,13 +609,23 @@ value="${i0}_${i}" challidx="${chall.challIdx}">${chall.name}
             };
 
             var msg0 = CLog(tag, 0, ShowState(sEl, PleaseWaitTips() + Lang("正在创建", "") + keyTag, 2));
+            
+            // 在配置步骤状态区域也显示提示
+            ShowState(".configStepState", Lang("正在生成密钥，请稍候...", ""), 3);
+            
             X509.KeyGenerate(type, type2, function (pem) {
                 if (UserClickSyncKill(id, tag, msg0)) return;
                 $(".in_privateKey").val(pem);
                 CLog(tag, 0, ShowState(sEl, keyTag + Lang("，创建成功。", ""), 2), '\n' + pem);
+                
+                // 清除配置步骤的提示
+                ShowState(".configStepState", false);
             }, function (err) {
                 if (UserClickSyncKill(id, tag, msg0 + " err: " + err)) return;
                 CLog(tag, 1, ShowState(sEl, keyTag + Lang("，发生错误：" + err, ""), 1));
+                
+                // 清除配置步骤的提示
+                ShowState(".configStepState", false);
             });
         };
         //生成ACME账户的密钥对
@@ -636,13 +646,23 @@ value="${i0}_${i}" challidx="${chall.challIdx}">${chall.name}
             };
 
             var msg0 = CLog(tag, 0, ShowState(sEl, PleaseWaitTips() + Lang("正在创建", "") + keyTag, 2));
+            
+            // 在配置步骤状态区域也显示提示，让用户知道正在生成密钥
+            ShowState(".configStepState", Lang("正在生成密钥，请稍候...", ""), 3);
+            
             X509.KeyGenerate(type, type2, function (pem) {
                 if (UserClickSyncKill(id, tag, msg0)) return;
                 $(".in_accountKey").val(pem);
                 CLog(tag, 0, ShowState(sEl, keyTag + Lang("，创建成功，请复制保管，下次输入自己的账户私钥。", ""), 2), '\n' + pem);
+                
+                // 清除配置步骤的提示
+                ShowState(".configStepState", false);
             }, function (err) {
                 if (UserClickSyncKill(id, tag, msg0 + " err: " + err)) return;
                 CLog(tag, 1, ShowState(sEl, keyTag + Lang("，发生错误：" + err, ""), 1));
+                
+                // 清除配置步骤的提示
+                ShowState(".configStepState", false);
             });
         };
         //点击确定按钮，完成配置域名和私钥的配置
