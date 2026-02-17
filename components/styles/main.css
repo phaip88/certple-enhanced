@@ -1,0 +1,378 @@
+@font-face {
+    font-family: "Geist";
+    src: url("./fonts/Geist/1.6.0/geist.woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist";
+    src: url("./fonts/Geist/1.6.0/geist-italic.woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    src: url("./fonts/Geist/1.6.0/geist-mono.woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    src: url("./fonts/Geist/1.6.0/geist-mono-italic.woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+
+
+:root {
+    --sans-font: "Geist", system-ui, sans-serif;
+    --mono-font: "Geist Mono", "Lucida Console", ui-monospace, monospace;
+}
+
+*,
+p {
+    margin: 0;
+    scrollbar-width: thin;
+}
+
+::selection {
+    background-color: #00CC00;
+    color: #fff;
+}
+
+:target {
+    scroll-margin-top: 5vh;
+}
+
+body {
+    font-family: var(--sans-font);
+}
+
+input[type="radio"],
+input[type="checkbox"],
+select,
+label {
+    cursor: pointer;
+}
+
+svg {
+    margin-bottom: 3px;
+}
+
+.alert {
+    border-radius: 15px;
+    padding: 1rem 2rem;
+}
+
+.form-control {
+    padding: .5rem 1rem;
+    border-radius: 0;
+}
+
+.form-control:focus {
+    outline: none;
+    box-shadow: none;
+    border: 1px solid #333;
+}
+
+a,
+button.a {
+    color: #00CC00;
+    text-decoration: underline;
+    background-color: #0000;
+    border: none;
+}
+
+a:hover,
+button.a:hover {
+    text-decoration: none;
+    background-color: #00CC00;
+    color: #fff;
+    cursor: pointer;
+}
+
+#q-navbar-div {
+    border-right: 1px solid #ddd;
+    background-color: #f9f9f9;
+    width: 15rem;
+    min-width: 15rem;
+}
+
+.q-navbar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.q-navbar .item {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    text-decoration: none;
+    padding: .5rem 1rem;
+    font-size: .8rem;
+    border-radius: .7rem;
+    transition: all 200ms ease-in-out;
+    color: #333;
+    margin-bottom: .5rem;
+}
+
+.q-navbar .item:hover,
+.q-navbar .item.active {
+    background-color: #e9e9e9;
+}
+
+.q-navbar .item svg {
+    width: auto;
+    height: 1.1rem;
+    margin-right: 1rem;
+    margin-bottom: 0;
+}
+
+.q-navbar .logo-div {
+    text-align: center;
+    padding: 1.5rem 3.25rem .75rem 3.25rem;
+    position: sticky;
+    top: 0;
+    background-color: #0000;
+    backdrop-filter: blur(.5rem);
+}
+
+
+
+.navbar-btnDiv {
+    z-index: 2;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 1rem;
+}
+
+.navbar-btnDiv .navbar-btn {
+    border: none;
+    font-size: .9rem;
+    padding: .5rem 1rem;
+    border-radius: 10px;
+    background-color: #0000;
+    backdrop-filter: blur(5px);
+}
+
+.navbar-btnDiv .navbar-btn svg {
+    width: auto;
+    height: 1.1rem;
+}
+
+
+
+.fs-12 {
+    font-size: 12px;
+}
+
+.fs-13 {
+    font-size: 13px;
+}
+
+.fs-14 {
+    font-size: 14px;
+}
+
+.color-9 {
+    color: #999;
+}
+
+
+
+.q-table {
+    overflow: auto;
+}
+
+.q-table table {
+    width: 100%;
+}
+
+.q-table thead td {
+    background-color: #eee;
+}
+
+.q-table tr td {
+    padding: .5rem;
+    margin: 0;
+    border: 1px solid #ddd;
+}
+
+.q-table thead td {
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.q-table td {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.q-btn {
+    background-color: #00cc0025;
+    padding: .5rem 1rem;
+    border: 1px solid #aaa !important;
+    color: #333 !important;
+    transition: all 200ms ease-in-out;
+    border-radius: .35rem !important;
+    text-decoration: none !important;
+    font-weight: bold;
+}
+
+.q-btn:hover {
+    box-shadow: 0 .5rem 1rem #00cc0050;
+    cursor: pointer;
+}
+
+.q-btn:active {
+    box-shadow: 0 .5rem 1rem #00cc0050 !important;
+}
+
+.btn-red {
+    background-color: #cc000025;
+    border-radius: .35rem !important;
+    color: #cc0000 !important;
+    padding: .5rem 1rem;
+    border: 1px solid #cc000075;
+}
+
+.btn-red:hover {
+    background-color: #cc000010;
+    cursor: pointer;
+    border: 1px solid #cc000075;
+}
+
+
+
+#dataDiv label {
+    font-size: .75rem;
+}
+
+#dataDiv textarea {
+    font-size: .65rem;
+}
+
+
+
+.icp-beian {
+    width: auto;
+    height: 16px;
+    margin-right: .2rem;
+}
+
+
+
+.label-radio {
+    display: inline-block;
+    text-decoration: none;
+    border: 1px solid #aaa;
+    padding: 6px 12px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    color: inherit;
+    transition: all 200ms ease-in-out;
+    border-radius: .35rem;
+}
+
+.label-radio:hover {
+    color: #00cc00;
+    box-shadow: 0 .5rem 1rem #00cc0050 !important;
+    background-color: #0000;
+}
+
+input[type="radio"]:checked+.label-radio {
+    outline: 0;
+    box-shadow: none;
+    background-color: #00cc0025;
+}
+
+
+
+.documents {
+    font-weight: 300;
+}
+
+.documents pre {
+    display: block;
+    background-color: #f1f1f1;
+    color: #333;
+    overflow-x: auto;
+    max-height: 50vh;
+    padding: 1rem 2rem;
+    font-size: 14px;
+    border-radius: 10px;
+    font-family: var(--mono-font) !important;
+    font-weight: normal;
+    margin: 1rem 3rem;
+    font-weight: 550;
+}
+
+.documents .mulu a {
+    display: block;
+    text-decoration: none;
+    color: #00cc00;
+}
+
+.documents .mulu a:hover {
+    background-color: #0000;
+    text-decoration: underline;
+}
+
+.documents h2 {
+    margin-top: 5rem;
+    margin-bottom: 1rem;
+    font-weight: 300;
+}
+
+.documents h4 {
+    border-top: 1px solid #ddd;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-top: 2rem;
+    font-weight: 300;
+}
+
+.documents h2 a,
+.documents h4 a {
+    text-decoration: none;
+}
+
+.documents p {
+    text-indent: 2rem;
+    margin: .5rem 2rem;
+}
+
+.documents img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    border: 1px solid #00cc0025;
+    border-radius: 10px;
+}
+
+.documents b {
+    font-weight: 700;
+}
+
+.documents strong {
+    font-family: var(--sans-font);
+    display: inline;
+    font-size: inherit;
+    border-bottom: 2px solid;
+    font-weight: 700;
+    color: inherit;
+}
