@@ -66,34 +66,22 @@ export default () => {
     // 前往设置后，如果发生改变，立即重新输入账户私钥值
     window.addEventListener('storage', function (event) {
       if (event.key === 'q-acmeAccountKey') {
-        document.querySelector('.in_accountKey').value = event.newValue;
+        const accountKeyEl = document.querySelector('.in_accountKey');
+        if (accountKeyEl) {
+          accountKeyEl.value = event.newValue;
+        }
       };
     });
-    // 自动创建填充和记忆账户私钥
-    const storageAccountKey = localStorage.getItem('q-acmeAccountKey');
-    const accountKey = document.querySelector('.in_accountKey');
-    if (!storageAccountKey || storageAccountKey === '') {
-      document.querySelector('input[name="choice_accountKey"][value="generateECC"]').click();
-      const trySet = setInterval(() => {
-        if (accountKey.value) {
-          localStorage.setItem('q-acmeAccountKey', accountKey.value);
-          clearInterval(trySet);
-        };
-      }, 100);
-    } else {
-      timer_1 = setTimeout(function () {
-        accountKey.value = storageAccountKey;
-      }, 500);
-      accountKey.value = storageAccountKey;
-    };
+    
+    // 注意：密钥的自动生成逻辑已移至 core.js 的 configStepShow 函数中
+    // 这样可以确保在正确的时机（ACME 服务初始化完成后）触发生成
 
 
 
-    // 自动创建和监听证书类型
+    // 注意：证书密钥的自动生成逻辑已移至 core.js 的 configStepShow 函数中
+    
+    // 监听证书类型选择
     const privateKey = document.getElementById('q-privateKey-userInput');
-    timer_2 = setTimeout(() => {
-      document.querySelector('input[name="choice_privateKey"][value="generateRSA"]').click();
-    }, 1000);
     document.getElementById('q-privateKey-auto').addEventListener('change', function () {
       document.querySelector('input[name="choice_privateKey"][value="generateRSA"]').click();
       privateKey.style.display = 'none';

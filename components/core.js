@@ -590,6 +590,31 @@ value="${i0}_${i}" challidx="${chall.challIdx}">${chall.name}
             setKey("privateKey"); setKey("accountKey");
 
             DropConfigFile = {};//配置完成，丢弃拖拽进来的配置信息
+            
+            // 自动触发密钥生成（如果密钥不存在）
+            setTimeout(function() {
+                // 检查账户密钥
+                var accountKeyVal = $(".in_accountKey").val();
+                if (!accountKeyVal) {
+                    // 从 localStorage 尝试加载
+                    var storageAccountKey = localStorage.getItem('q-acmeAccountKey');
+                    if (storageAccountKey) {
+                        $(".in_accountKey").val(storageAccountKey);
+                    } else {
+                        // 触发自动生成
+                        var generateBtn = $("input[name=choice_accountKey][value=generateECC]")[0];
+                        if (generateBtn) generateBtn.click();
+                    }
+                }
+                
+                // 检查证书密钥
+                var privateKeyVal = $(".in_privateKey").val();
+                if (!privateKeyVal) {
+                    // 触发自动生成
+                    var generateBtn = $("input[name=choice_privateKey][value=generateRSA]")[0];
+                    if (generateBtn) generateBtn.click();
+                }
+            }, 100); // 短暂延迟确保 DOM 已更新
         };
         //生成证书的密钥对
         var configPrivateKeyGenerate = function (type) {
@@ -653,6 +678,10 @@ value="${i0}_${i}" challidx="${chall.challIdx}">${chall.name}
             X509.KeyGenerate(type, type2, function (pem) {
                 if (UserClickSyncKill(id, tag, msg0)) return;
                 $(".in_accountKey").val(pem);
+                
+                // 保存到 localStorage
+                localStorage.setItem('q-acmeAccountKey', pem);
+                
                 CLog(tag, 0, ShowState(sEl, keyTag + Lang("，创建成功，请复制保管，下次输入自己的账户私钥。", ""), 2), '\n' + pem);
                 
                 // 清除配置步骤的提示
