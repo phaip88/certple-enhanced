@@ -1,56 +1,131 @@
-# Certple
+# Certple Enhanced
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL_3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.txt)
+[![Build and Deploy](https://github.com/phaip88/certple-enhanced/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/phaip88/certple-enhanced/actions/workflows/build-and-deploy.yml)
 
-Certple 的目的是提供一个简单快速申请有效 TLS/SSL 证书的客户端，快速为您的站点提供 TLS/SSL 加密层(HTTPS)，而不是 ACME 自动化。
+Certple Enhanced 是 Certple 的增强版本，提供简单快速申请有效 TLS/SSL 证书的客户端，并新增了用户认证和自动续期功能。
 
-支持 单域名证书、多域名证书 和 通配符证书，一切来自 <a href="https://letsencrypt.org/">Let's Encrypt</a> !
+## ✨ 新增功能
 
-## 🚀 立即开始
+### 🔐 用户认证系统
+- **登录/登出功能**：保护证书管理页面
+- **凭证管理**：安全的用户名和密码设置
+- **会话管理**：7天有效期，自动续期
+- **路由保护**：/manage 和 /settings 需要登录访问
+- **密码加密**：使用 PBKDF2 + 100,000 次迭代
 
-无需注册任何账户，只需要提供一些 DNS 记录来验证您对域名的所有权，剩下的一切交给 Certple 。
+### 🔄 自动续期系统（开发中）
+- **证书扫描**：自动检测即将到期的证书
+- **到期提醒**：距离到期 30 天时提醒
+- **续期调度**：24 小时定时检查
+- **历史记录**：记录所有续期操作
+- **配置管理**：全局和单证书级别的续期设置
 
-<a href="https://certple.zeoseven.com/home/#开始">前往 certple.zeoseven.com 开始申请！</a>
+## 🚀 快速开始
 
-## ✨ 私有化
+### 在线使用
 
-- Node.js 20.9 +
+访问部署版本：[https://phaip88.github.io/certple-enhanced](https://phaip88.github.io/certple-enhanced)
 
-### 私有化部署
+### 本地开发
 
-你可以前往 <a href="https://github.com/zeoseven/certple/releases">Releases</a> 直接下载 Certple_Private-Build 即可获得已经构建好的私有化版本，它是完全静态的，你可以开设一个本地服务器来运行它：
+```bash
+# 克隆仓库
+git clone https://github.com/phaip88/certple-enhanced.git
+cd certple-enhanced
 
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 访问 http://localhost:3000
 ```
-npm i serve -g
-```
 
-```
-serve
-```
+### 构建部署
 
-### 私有化构建
-
-```
-npm i
-```
-
-```
+```bash
+# 构建静态文件
 npm run build
+
+# 构建文件将生成在 out/ 目录
+# 可以使用任何静态文件服务器部署
 ```
-在这之后，构建文件将出现在 `out/` 文件夹。
 
-如果你并不喜欢部署的过程，那么可以在构建之后直接启动生产服务器：
-```
-npm run start
-```
-这将更快的在 localhost:3000 可用。
+## 📋 原有功能
 
-> 你可以使用 `npm run dev` 启动开发服务器来修改 Certple ，只要那符合 GPLv3 LICENSE。
+- 支持 **单域名证书**、**多域名证书** 和 **通配符证书**
+- 来自 [Let's Encrypt](https://letsencrypt.org/) 的免费证书
+- 支持 **DNS-01** 和 **HTTP-01** 验证方式
+- **证书管理**：查看、下载、删除证书
+- **数据导入/导出**：备份和恢复证书数据
+- **完全本地化**：所有数据存储在 localStorage
 
-## ❓ 文档
+## 🔧 技术栈
 
-使用文档可以在 <a href="https://certple.zeoseven.com/docs/">certple.zeoseven.com/docs</a> 上查阅。
+- **框架**：Next.js 16.1.3 + React 19.2.3
+- **UI**：Bootstrap 5.3.8
+- **密码学**：Web Crypto API
+- **部署**：GitHub Actions + GitHub Pages
+- **协议**：ACME (RFC 8555)
+
+## 📖 使用指南
+
+### 首次使用
+
+1. 访问 [设置页面](/settings)
+2. 切换到"认证设置"选项卡
+3. 创建用户名和密码
+4. 登录后即可访问证书管理功能
+
+### 申请证书
+
+1. 在首页输入域名
+2. 选择证书类型（单域名/通配符）
+3. 按照提示完成域名验证
+4. 下载证书和私钥
+
+### 证书管理
+
+1. 访问 [证书管理页面](/manage)（需要登录）
+2. 查看所有证书的到期时间
+3. 下载证书文件（.pem 和 .key）
+4. 手动续期或删除证书
+
+## 🔒 安全性
+
+- **密码加密**：PBKDF2 算法，100,000 次迭代
+- **会话管理**：安全的会话令牌，7天有效期
+- **本地存储**：所有数据存储在浏览器 localStorage
+- **无服务器**：纯前端应用，无需后端服务器
+
+## 🤝 贡献
+
+欢迎贡献代码！请遵循以下步骤：
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
 ## 📜 许可证
 
-GPL-3.0 © ZeoSeven
+GPL-3.0 © phaip88
+
+基于 [Certple](https://github.com/zeoseven/certple) by ZeoSeven
+
+## 🙏 致谢
+
+- 原项目：[Certple](https://github.com/zeoseven/certple) by ZeoSeven
+- ACME 实现：[xiangyuecn](https://github.com/xiangyuecn)
+- 证书颁发：[Let's Encrypt](https://letsencrypt.org/)
+
+## 📞 支持
+
+如有问题或建议，请：
+- 提交 [Issue](https://github.com/phaip88/certple-enhanced/issues)
+- 查看 [文档](/docs)
+- 访问原项目 [Certple 文档](https://certple.zeoseven.com/docs/)
+

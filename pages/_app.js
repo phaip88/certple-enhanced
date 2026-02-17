@@ -1,9 +1,10 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { dTitle, ImageFix, tc } from '@components/main';
 import { RouteGuard, SessionManager } from '../lib/auth/index.js';
+import { RenewalScheduler, ConfigManager } from '../lib/auto-renewal/index.js';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import '@components/styles/main.css';
@@ -18,6 +19,8 @@ export default function ({ Component, pageProps }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const sessionManager = new SessionManager();
+    const schedulerRef = useRef(null);
+    const configManager = new ConfigManager();
 
 
 
@@ -100,6 +103,22 @@ export default function ({ Component, pageProps }) {
         window.innerWidth < mdBreakpoint && setNavbarDisplay("d-none");
 
         import("bootstrap");
+        
+        // 启动自动续期调度器
+        const config = configManager.getAutoRenewalConfig();
+        if (config.enabled) {
+            schedulerRef.current = new RenewalScheduler();
+            schedulerRef.current.start();
+            console.log('自动续期调度器已启动');
+        }
+        
+        // 清理函数：停止调度器
+        return () => {
+            if (schedulerRef.current) {
+                schedulerRef.current.stop();
+                console.log('自动续期调度器已停止');
+            }
+        };
 
     }, []);
 

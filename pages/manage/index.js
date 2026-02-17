@@ -1,10 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { dTitle, tc } from '@components/main';
+import { CertificateScanner, ConfigManager, HistoryManager } from '../../lib/auto-renewal/index.js';
 
 export default () => {
+    const [certificates, setCertificates] = useState([]);
+    const [renewalConfig, setRenewalConfig] = useState({});
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedDomain, setSelectedDomain] = useState('');
+    const [renewalHistory, setRenewalHistory] = useState([]);
+    
+    const scanner = new CertificateScanner();
+    const configManager = new ConfigManager();
+    const historyManager = new HistoryManager();
 
     useEffect(() => {
+        // 加载配置
+        const config = configManager.getAutoRenewalConfig();
+        setRenewalConfig(config);
+        
+        // 扫描证书
+        const scannedCerts = scanner.scanCertificates();
+        setCertificates(scannedCerts);
 
         const dataDiv = document.getElementById('dataDiv');
 
@@ -18,11 +35,38 @@ export default () => {
                 const key = d.key || notFound;
                 const domain = d.domains || notFound;
                 const index = i + 1;
+                
+                // 获取续期状态
+                const certInfo = scannedCerts.find(c => c.domains === domain);
+                const daysUntilExpiry = certInfo ? certInfo.daysUntilExpiry : null;
+                const isExpired = certInfo ? certInfo.isExpired : false;
+                const renewalStatus = d.renewalStatus || 'idle';
+                const isAutoRenewalEnabled = configManager.isCertAutoRenewalEnabled(domain);
+                
+                // 状态指示器
+                let statusBadge = '';
+                if (isExpired) {
+                    statusBadge = '<span class="badge bg-danger">已过期</span>';
+                } else if (renewalStatus === 'in_progress') {
+                    statusBadge = '<span class="badge bg-info">续期中</span>';
+                } else if (renewalStatus === 'success') {
+                    statusBadge = '<span class="badge bg-success">续期成功</span>';
+                } else if (renewalStatus === 'failure') {
+                    statusBadge = '<span class="badge bg-warning">续期失败</span>';
+                } else if (renewalStatus === 'pending') {
+                    statusBadge = '<span class="badge bg-secondary">待续期</span>';
+                } else if (daysUntilExpiry !== null && daysUntilExpiry <= renewalConfig.threshold) {
+                    statusBadge = '<span class="badge bg-warning">即将到期</span>';
+                }
 
                 const item = `
                     <tr>
                         <td># ${index}</td>
-                        <td>${domain}</td>
+                        <td>
+                            ${domain}
+                            ${statusBadge}
+                            ${isAutoRenewalEnabled ? '<span class="badge bg-primary ms-1">自动续期</span>' : ''}
+                        </td>
                         <td class="guoqi-time" data-time="${d.time}"></td>
                         <td>
                             <a href="#!" class="downPem" data-id="${index}">下载 .pem</a>
@@ -32,6 +76,10 @@ export default () => {
                             <a href="#!" class="delete" data-id="${i}">删除</a>
                             <span> | </span>
                             <a href="#!" class="update" data-id="${index}">续期</a>
+                            <span> | </span>
+                            <a href="#!" class="toggle-auto-renewal" data-domain="${domain}" data-enabled="${isAutoRenewalEnabled}">${isAutoRenewalEnabled ? '禁用' : '启用'}自动续期</a>
+                            <span> | </span>
+                            <a href="#!" class="view-history" data-domain="${domain}">查看历史</a>
                             <span> | </span>
                             <a href="#!" data-id="${index}" data-bs-toggle="collapse" data-bs-target="#td-collapse-${index}" aria-expanded="false" aria-controls="td-collapse-${index}">显示源字符串</a>
                             <div class="collapse" id="td-collapse-${index}">
@@ -51,6 +99,32 @@ export default () => {
                     <pre id="td-domain-${index}" class="d-none">${domain}</pre>
                 `;
                 dataDiv.innerHTML += item;
+            });
+            
+            // 添加自动续期开关事件监听
+            const toggleLinks = document.querySelectorAll('.toggle-auto-renewal');
+            toggleLinks.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const domain = this.getAttribute('data-domain');
+                    const currentEnabled = this.getAttribute('data-enabled') === 'true';
+                    configManager.setCertAutoRenewal(domain, !currentEnabled);
+                    tc(`已${!currentEnabled ? '启用' : '禁用'}自动续期`);
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            });
+            
+            // 添加查看历史事件监听
+            const historyLinks = document.querySelectorAll('.view-history');
+            historyLinks.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const domain = this.getAttribute('data-domain');
+                    setSelectedDomain(domain);
+                    const history = historyManager.getHistory(domain);
+                    setRenewalHistory(history);
+                    setShowHistoryModal(true);
+                });
             });
         } else {
             document.querySelector('.q-table').innerHTML = "<p>您还没有申请任何一个证书，请前往 <a href='/'>申请证书</a> 页面开始 ~</p>";
@@ -149,7 +223,21 @@ export default () => {
             });
         });
 
-    });
+    }, []);
+    
+    // 关闭历史记录模态框
+    const closeHistoryModal = () => {
+        setShowHistoryModal(false);
+        setSelectedDomain('');
+        setRenewalHistory([]);
+    };
+    
+    // 格式化时间戳
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return '未知';
+        const date = new Date(timestamp);
+        return date.toLocaleString('zh-CN');
+    };
 
     return (<>
 
@@ -170,6 +258,59 @@ export default () => {
                 <tbody id="dataDiv"></tbody>
             </table>
         </div>
+        
+        {/* 续期历史模态框 */}
+        {showHistoryModal && (
+            <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">续期历史 - {selectedDomain}</h5>
+                            <button type="button" className="btn-close" onClick={closeHistoryModal}></button>
+                        </div>
+                        <div className="modal-body">
+                            {renewalHistory.length === 0 ? (
+                                <p className="text-muted">暂无续期历史记录</p>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>时间</th>
+                                                <th>状态</th>
+                                                <th>详情</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {renewalHistory.map((record, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{formatTimestamp(record.timestamp)}</td>
+                                                    <td>
+                                                        {record.status === 'success' && <span className="badge bg-success">成功</span>}
+                                                        {record.status === 'failure' && <span className="badge bg-danger">失败</span>}
+                                                        {record.status === 'in_progress' && <span className="badge bg-info">进行中</span>}
+                                                    </td>
+                                                    <td>
+                                                        {record.error ? (
+                                                            <span className="text-danger">{record.error}</span>
+                                                        ) : (
+                                                            <span className="text-success">续期成功</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={closeHistoryModal}>关闭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
 
     </>)
 };
