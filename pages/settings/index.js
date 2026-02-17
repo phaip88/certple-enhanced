@@ -2,12 +2,13 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { tc, dTitle, SmallPage } from '@components/main';
 import { CredentialManager } from '../../lib/auth/index.js';
-import { TelegramNotifier } from '../../lib/auto-renewal/index.js';
+import { TelegramNotifier, ConfigManager } from '../../lib/auto-renewal/index.js';
 
 export default () => {
     const [activeTab, setActiveTab] = useState('data');
     const [credentialManager] = useState(() => new CredentialManager());
     const [telegramNotifier] = useState(() => new TelegramNotifier());
+    const [configManager] = useState(() => new ConfigManager());
     
     // 认证设置状态
     const [hasCredentials, setHasCredentials] = useState(false);
@@ -34,6 +35,14 @@ export default () => {
     const [telegramSuccess, setTelegramSuccess] = useState('');
     const [isTesting, setIsTesting] = useState(false);
 
+    // 自动续期设置状态
+    const [renewalConfig, setRenewalConfig] = useState({
+        enabled: false,
+        threshold: 30
+    });
+    const [renewalError, setRenewalError] = useState('');
+    const [renewalSuccess, setRenewalSuccess] = useState('');
+
     useEffect(() => {
         // 检查是否已设置凭证
         setHasCredentials(credentialManager.hasCredentials());
@@ -41,6 +50,13 @@ export default () => {
         // 加载 Telegram 配置
         const tgConfig = telegramNotifier.getTelegramConfig();
         setTelegramConfig(tgConfig);
+
+        // 加载自动续期配置
+        const autoRenewalConfig = configManager.getAutoRenewalConfig();
+        setRenewalConfig({
+            enabled: autoRenewalConfig.enabled,
+            threshold: autoRenewalConfig.threshold
+        });
 
         // 数据管理相关的事件监听
         const userDomain = localStorage.getItem('x-q-domain');
@@ -245,6 +261,29 @@ export default () => {
         setIsTesting(false);
     };
 
+    // 处理自动续期配置保存
+    const handleSaveRenewalConfig = (e) => {
+        e.preventDefault();
+        setRenewalError('');
+        setRenewalSuccess('');
+
+        const currentConfig = configManager.getAutoRenewalConfig();
+        const newConfig = {
+            ...currentConfig,
+            enabled: renewalConfig.enabled,
+            threshold: renewalConfig.threshold
+        };
+
+        const success = configManager.saveAutoRenewalConfig(newConfig);
+
+        if (success) {
+            setRenewalSuccess('自动续期配置已保存！需要刷新页面以应用更改。');
+            tc('自动续期配置已保存！');
+        } else {
+            setRenewalError('保存失败，请检查配置');
+        }
+    };
+
     return (<>
         <Head>
             <title>{`设置 - ${dTitle}`}</title>
@@ -268,6 +307,15 @@ export default () => {
                         onClick={(e) => { e.preventDefault(); setActiveTab('auth'); }}
                     >
                         认证设置
+                    </a>
+                </li>
+                <li className="nav-item">
+                    <a 
+                        className={`nav-link ${activeTab === 'renewal' ? 'active' : ''}`}
+                        href="#!"
+                        onClick={(e) => { e.preventDefault(); setActiveTab('renewal'); }}
+                    >
+                        自动续期设置
                     </a>
                 </li>
                 <li className="nav-item">
@@ -440,6 +488,80 @@ export default () => {
                             </button>
                         </form>
                     )}
+                </>
+            )}
+
+            {/* 自动续期设置选项卡 */}
+            {activeTab === 'renewal' && (
+                <>
+                    <div className="mb-4">
+                        <p className="mb-3">配置证书自动续期功能，系统将在证书即将到期时自动尝试续期。</p>
+                    </div>
+
+                    {renewalError && (
+                        <div className="alert alert-danger" role="alert">
+                            {renewalError}
+                        </div>
+                    )}
+
+                    {renewalSuccess && (
+                        <div className="alert alert-success" role="alert">
+                            {renewalSuccess}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSaveRenewalConfig}>
+                        <div className="mb-3">
+                            <div className="form-check form-switch">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="renewalEnabled"
+                                    checked={renewalConfig.enabled}
+                                    onChange={(e) => setRenewalConfig({ ...renewalConfig, enabled: e.target.checked })}
+                                />
+                                <label className="form-check-label" htmlFor="renewalEnabled">
+                                    启用全局自动续期
+                                </label>
+                            </div>
+                            <small className="form-text text-muted">
+                                启用后，系统将每24小时检查一次证书到期情况并自动续期
+                            </small>
+                        </div>
+
+                        <div className="mb-4">
+                            <label htmlFor="threshold" className="form-label">
+                                续期阈值（天数）
+                            </label>
+                            <input
+                                type="number"
+                                className="form-control q-form"
+                                id="threshold"
+                                value={renewalConfig.threshold}
+                                onChange={(e) => setRenewalConfig({ ...renewalConfig, threshold: parseInt(e.target.value) || 30 })}
+                                min="1"
+                                max="60"
+                                required
+                            />
+                            <small className="form-text text-muted">
+                                当证书距离到期小于此天数时触发自动续期（1-60天，默认30天）
+                            </small>
+                        </div>
+
+                        <div className="alert alert-warning" role="alert">
+                            <strong>注意：</strong>
+                            <ul className="mb-0 mt-2">
+                                <li>自动续期功能目前需要手动完成 ACME 验证流程</li>
+                                <li>系统会检测到期证书并发送通知，但实际续期仍需手动操作</li>
+                                <li>可以在证书管理页面为单个证书启用/禁用自动续期</li>
+                                <li>修改配置后需要刷新页面以应用更改</li>
+                            </ul>
+                        </div>
+
+                        <button type="submit" className="btn q-btn">
+                            保存配置
+                        </button>
+                    </form>
                 </>
             )}
 
