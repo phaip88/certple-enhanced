@@ -2,10 +2,12 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { tc, dTitle, SmallPage } from '@components/main';
 import { CredentialManager } from '../../lib/auth/index.js';
+import { TelegramNotifier } from '../../lib/auto-renewal/index.js';
 
 export default () => {
     const [activeTab, setActiveTab] = useState('data');
     const [credentialManager] = useState(() => new CredentialManager());
+    const [telegramNotifier] = useState(() => new TelegramNotifier());
     
     // 认证设置状态
     const [hasCredentials, setHasCredentials] = useState(false);
@@ -19,9 +21,26 @@ export default () => {
     const [authError, setAuthError] = useState('');
     const [authSuccess, setAuthSuccess] = useState('');
 
+    // Telegram 通知设置状态
+    const [telegramConfig, setTelegramConfig] = useState({
+        enabled: false,
+        botToken: '',
+        chatId: '',
+        notifyOnExpiring: true,
+        notifyOnRenewalSuccess: true,
+        notifyOnRenewalFailure: true
+    });
+    const [telegramError, setTelegramError] = useState('');
+    const [telegramSuccess, setTelegramSuccess] = useState('');
+    const [isTesting, setIsTesting] = useState(false);
+
     useEffect(() => {
         // 检查是否已设置凭证
         setHasCredentials(credentialManager.hasCredentials());
+
+        // 加载 Telegram 配置
+        const tgConfig = telegramNotifier.getTelegramConfig();
+        setTelegramConfig(tgConfig);
 
         // 数据管理相关的事件监听
         const userDomain = localStorage.getItem('x-q-domain');
@@ -189,6 +208,43 @@ export default () => {
         }
     };
 
+    // 处理 Telegram 配置保存
+    const handleSaveTelegramConfig = (e) => {
+        e.preventDefault();
+        setTelegramError('');
+        setTelegramSuccess('');
+
+        const success = telegramNotifier.saveTelegramConfig(telegramConfig);
+
+        if (success) {
+            setTelegramSuccess('Telegram 通知配置已保存！');
+            tc('Telegram 通知配置已保存！');
+        } else {
+            setTelegramError('保存失败，请检查配置');
+        }
+    };
+
+    // 测试 Telegram 连接
+    const handleTestTelegram = async () => {
+        setIsTesting(true);
+        setTelegramError('');
+        setTelegramSuccess('');
+
+        // 临时保存配置以便测试
+        telegramNotifier.saveTelegramConfig(telegramConfig);
+
+        const success = await telegramNotifier.testConnection();
+
+        if (success) {
+            setTelegramSuccess('测试消息发送成功！请检查 Telegram');
+            tc('测试消息发送成功！');
+        } else {
+            setTelegramError('测试失败，请检查 Bot Token 和 Chat ID');
+        }
+
+        setIsTesting(false);
+    };
+
     return (<>
         <Head>
             <title>{`设置 - ${dTitle}`}</title>
@@ -212,6 +268,15 @@ export default () => {
                         onClick={(e) => { e.preventDefault(); setActiveTab('auth'); }}
                     >
                         认证设置
+                    </a>
+                </li>
+                <li className="nav-item">
+                    <a 
+                        className={`nav-link ${activeTab === 'telegram' ? 'active' : ''}`}
+                        href="#!"
+                        onClick={(e) => { e.preventDefault(); setActiveTab('telegram'); }}
+                    >
+                        Telegram 通知
                     </a>
                 </li>
             </ul>
@@ -375,6 +440,138 @@ export default () => {
                             </button>
                         </form>
                     )}
+                </>
+            )}
+
+            {/* Telegram 通知选项卡 */}
+            {activeTab === 'telegram' && (
+                <>
+                    <div className="mb-4">
+                        <p className="mb-3">配置 Telegram Bot 以接收证书到期和续期通知。</p>
+                        <div className="alert alert-info" role="alert">
+                            <strong>如何获取配置信息：</strong>
+                            <ol className="mb-0 mt-2">
+                                <li>在 Telegram 中搜索 <code>@BotFather</code> 并创建一个新的 Bot</li>
+                                <li>复制 Bot Token 并粘贴到下方</li>
+                                <li>在 Telegram 中搜索 <code>@userinfobot</code> 获取你的 Chat ID</li>
+                                <li>或者创建一个群组，将 Bot 添加进去，使用群组的 Chat ID</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    {telegramError && (
+                        <div className="alert alert-danger" role="alert">
+                            {telegramError}
+                        </div>
+                    )}
+
+                    {telegramSuccess && (
+                        <div className="alert alert-success" role="alert">
+                            {telegramSuccess}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSaveTelegramConfig}>
+                        <div className="mb-3">
+                            <div className="form-check form-switch">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="telegramEnabled"
+                                    checked={telegramConfig.enabled}
+                                    onChange={(e) => setTelegramConfig({ ...telegramConfig, enabled: e.target.checked })}
+                                />
+                                <label className="form-check-label" htmlFor="telegramEnabled">
+                                    启用 Telegram 通知
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="mb-3">
+                            <label htmlFor="botToken" className="form-label">Bot Token</label>
+                            <input
+                                type="text"
+                                className="form-control q-form"
+                                id="botToken"
+                                value={telegramConfig.botToken}
+                                onChange={(e) => setTelegramConfig({ ...telegramConfig, botToken: e.target.value })}
+                                placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                                required={telegramConfig.enabled}
+                            />
+                            <small className="form-text text-muted">从 @BotFather 获取的 Bot Token</small>
+                        </div>
+
+                        <div className="mb-3">
+                            <label htmlFor="chatId" className="form-label">Chat ID</label>
+                            <input
+                                type="text"
+                                className="form-control q-form"
+                                id="chatId"
+                                value={telegramConfig.chatId}
+                                onChange={(e) => setTelegramConfig({ ...telegramConfig, chatId: e.target.value })}
+                                placeholder="123456789 或 -100123456789"
+                                required={telegramConfig.enabled}
+                            />
+                            <small className="form-text text-muted">你的用户 ID 或群组 ID（群组 ID 以 - 开头）</small>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="form-label">通知类型</label>
+                            
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="notifyExpiring"
+                                    checked={telegramConfig.notifyOnExpiring}
+                                    onChange={(e) => setTelegramConfig({ ...telegramConfig, notifyOnExpiring: e.target.checked })}
+                                />
+                                <label className="form-check-label" htmlFor="notifyExpiring">
+                                    证书即将到期提醒
+                                </label>
+                            </div>
+
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="notifySuccess"
+                                    checked={telegramConfig.notifyOnRenewalSuccess}
+                                    onChange={(e) => setTelegramConfig({ ...telegramConfig, notifyOnRenewalSuccess: e.target.checked })}
+                                />
+                                <label className="form-check-label" htmlFor="notifySuccess">
+                                    续期成功通知
+                                </label>
+                            </div>
+
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="notifyFailure"
+                                    checked={telegramConfig.notifyOnRenewalFailure}
+                                    onChange={(e) => setTelegramConfig({ ...telegramConfig, notifyOnRenewalFailure: e.target.checked })}
+                                />
+                                <label className="form-check-label" htmlFor="notifyFailure">
+                                    续期失败通知
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="d-flex gap-2">
+                            <button type="submit" className="btn q-btn">
+                                保存配置
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                onClick={handleTestTelegram}
+                                disabled={isTesting || !telegramConfig.botToken || !telegramConfig.chatId}
+                            >
+                                {isTesting ? '发送中...' : '发送测试消息'}
+                            </button>
+                        </div>
+                    </form>
                 </>
             )}
         </SmallPage>
