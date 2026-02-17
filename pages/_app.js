@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { dTitle, ImageFix, tc } from '@components/main';
+import depend from '@components/core';
 import { RouteGuard, SessionManager } from '../lib/auth/index.js';
 import { RenewalScheduler, ConfigManager } from '../lib/auto-renewal/index.js';
 
@@ -103,6 +104,10 @@ export default function ({ Component, pageProps }) {
         window.innerWidth < mdBreakpoint && setNavbarDisplay("d-none");
 
         import("bootstrap");
+        
+        // 初始化 ACME 依赖（必须在启动调度器之前）
+        depend();
+        console.log('ACME 依赖已加载');
         
         // 启动自动续期调度器
         const config = configManager.getAutoRenewalConfig();
